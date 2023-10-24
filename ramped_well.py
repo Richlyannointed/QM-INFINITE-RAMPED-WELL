@@ -1,14 +1,15 @@
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+plt.rcParams['font.size'] = 35
 
 
 """
 Approximate Energy Eigenvalues
 -----
-E_1 ~ 0.5005675888061523
-E_2 ~ 0.872
-E_3 ~ 1.172
+E_1 ~ 0.500567553963311
+E_2 ~ 0.8714876814569196
+E_3 ~ 1.1781727259013322
 
 E_2 ~ 1.4799341735839842
 E_3 ~ 2.2882755661010736
@@ -125,9 +126,7 @@ def generatePsiEndpoint(E_guess:float) -> float:
     # Numerical Integration (carrying only 3 values)
     for pos in x[2:]:
         psi_n = 2 * psi_c - psi_p + dx**2 * g(E_guess, pos) * psi_c
-        psi_p = psi_c
-        psi_c = psi_n
-        # print(f'{pos:.3e}, {psi_n:.3e}')
+        psi_p, psi_c = psi_c, psi_n
     
     return psi_n
 
@@ -153,8 +152,7 @@ def generatePsiArray(E:float) -> np.ndarray:
     # Numerical Integration (carrying only 3 values)
     for i, pos in enumerate(x[2:]):
         psi_n = 2 * psi_c - psi_p + dx**2 * g(E, pos) * psi_c
-        psi_p = psi_c
-        psi_c = psi_n
+        psi_p, psi_c = psi_c, psi_n
         psi[2+i] = psi_n
 
     return psi
@@ -172,19 +170,19 @@ def visualRootFinding(Energies:np.ndarray):
     """
     mpl.interactive(True)
     mpl.use('TkAgg')
-    scale = 2.5
+    scale = 3.5
     
     fig, ax = plt.subplots(1, figsize=(scale*8, scale*5))
     line_styles = ['-', '--', '-.', ':']  # Define different line styles
     markers = ['o', 's', 'D', 'v', '^', '.']  # Define different markers
-    line_widths = [1, 2, 1.5, 2.5]  # Define different line widths
+    line_widths = [1, 1.5]  # Define different line widths
     
     for i, E in enumerate(Energies):
         psi = generatePsiArray(E)
         style = line_styles[i % len(line_styles)]
         marker = markers[i % len(markers)]
         width = line_widths[i % len(line_widths)]
-        label = f'{E:.3e}'
+        label = f'{E:.2e}'
         ax.plot(x, psi, linestyle=style, marker=marker, markersize=4, lw=width, alpha=0.6, label=label)
     
     ax.axhline(y=0, xmin=0, xmax=3, color='r', linestyle='--', alpha=0.8)
@@ -195,6 +193,7 @@ def visualRootFinding(Energies:np.ndarray):
     plt.ylabel('$\psi(x) [m^{-1/2}]$')
     plt.ylim(-3.5e-5, 3.5e-5)
     fig.legend()
+    # plt.savefig('convergence.png', dpi=600)
     plt.show()
 
 
@@ -234,14 +233,16 @@ def plotGeneratePsiEndpoint():
     E = np.linspace(0, 6, 1000)
     Y = generatePsiEndpoint(E)
     fig, ax = plt.subplots(1, figsize=(scale*8, scale*5))
-    ax.plot(E, Y, 'r', label='$\psi(a)$ endpoints')
+    ax.plot(E, Y, 'r', label='$\psi(a)$ - endpoints')
     ax.axhline(y=0, color='k', linestyle='--', alpha=0.5)
-    ax.set(title='$\psi(a)$ endpoints Vs Energy', 
-           xlabel='$\psi(x) [m^{-1/2}]$',
-           ylabel='$\psi(a)_E$', 
-           ylim=(-1e-2, 1e-2)
+    ax.set(title='$\psi(x)$ endpoints Vs Energy', 
+           xlabel='E [eV]',
+           ylabel='$\psi(E, x=a) \; [m^{-1/2}]$', 
+        #    ylim=(-6e-3, 1e-3),
+           yscale='log'
            )
     ax.legend()
+    plt.savefig('energy_dist.png', dpi=600)
     plt.show()
 
 
@@ -272,20 +273,20 @@ def plotPsi(psi:np.ndarray):
 def main():
 
     # secantDescent(generatePsiEndpoint, 0.49, 0.499)
-    for i, initials in enumerate([(0.49, 0.499), (1.17, 1.18), (0.873, 0.871)]):
-        try:
-            E = secantDescent(generatePsiEndpoint, *initials)
-            print(f'Energy Eigenvalue E{i+1} = {E}')
-        except TypeError:
-            print(f'Eigenvalue: {(initials[0] + initials[1])/2} Not Found.')
+    # for i, initials in enumerate([(0.49, 0.499), (0.873, 0.871), (1.17, 1.18)]):
+    #     try:
+    #         E = secantDescent(generatePsiEndpoint, *initials)
+    #         print(f'Energy Eigenvalue E{i+1} = {E}')
+    #     except TypeError:
+    #         print(f'Eigenvalue: {(initials[0] + initials[1])/2} Not Found.')
 
     #plotPsi(
     #     normalisePsi(
     #         generatePsiArray(0.5005675888061523))
     #         )
 
-    # visualRootFinding(np.linspace(1.17, 1.18, 30))
-    #plotGeneratePsiEndpoint()
+    visualRootFinding(np.linspace(0.5, 0.501, 30))
+    # plotGeneratePsiEndpoint()
     
 
 
