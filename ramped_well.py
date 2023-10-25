@@ -1,22 +1,8 @@
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-plt.rcParams['font.size'] = 35
+plt.rcParams['font.size'] = 25
 
-
-"""
-Approximate Energy Eigenvalues
------
-E_1 ~ 0.500567553963311
-E_2 ~ 0.8714876814569196
-E_3 ~ 1.1781727259013322
-
-E_2 ~ 1.4799341735839842
-E_3 ~ 2.2882755661010736
-E_4 ~ 4.1494517059326155
-
-ΔE = 
-""" 
 
 # CONSTANTS
 a = 3 #[nm]
@@ -97,6 +83,7 @@ def secantDescent(func:callable, E_0:float, E_1:float) -> float:
         iter += 1
         # print(f"Energy: {E_n}")
     return E_n
+
 
 def g(E:float, x:float) -> float:
     """
@@ -193,7 +180,7 @@ def visualRootFinding(Energies:np.ndarray):
     plt.ylabel('$\psi(x) [m^{-1/2}]$')
     plt.ylim(-3.5e-5, 3.5e-5)
     fig.legend()
-    # plt.savefig('convergence.png', dpi=600)
+    # plt.savefig('visualRootFinding.png', dpi=300)
     plt.show()
 
 
@@ -211,20 +198,25 @@ def normalisePsi(psi:np.ndarray) -> np.ndarray:
     psi_normalised : ndarray
         Normalised array of psi(x) values
     """
-    psiSquared = np.exp(psi)
+    psiSquared = psi**2
     integralPsiSquared = dx * (np.sum(psiSquared[1: -1] + (psiSquared[0] + psiSquared[-1]) / 2)) #numerical approx. of integral
-    A = 1 / np.sqrt(integralPsiSquared)
+    A_squared = 1 / integralPsiSquared
 
-    return A * psi
-
-def positionExpectation():
-    #TODO
-    ...
+    return np.sqrt(A_squared) * psi
 
 
-def momentumExpectation():
-    #TODO but should be zero for the stationary states!
-    ...
+def positionExpectation(psi:np.ndarray):
+    """Calculates the position expectation of a normalised energy eigenstate
+    """
+    psiSquared = psi**2
+    return dx * (sum(psiSquared[1:-1] * x[1:-1]) + (psiSquared[0] * x[0] + psiSquared[-1] * x[-1]) / 2)
+
+
+def momentumExpectation(psi:np.ndarray):
+    """Calculates the modulus of the momentum expectation of a normalised energy eigenstate
+    """
+    result = -2 * 1j * hc * sum(psi[1:-1] * (psi[:-2] - psi[2:]))
+    return np.abs(result)
     
 
 def plotGeneratePsiEndpoint():
@@ -242,36 +234,103 @@ def plotGeneratePsiEndpoint():
            yscale='log'
            )
     ax.legend()
-    plt.savefig('energy_dist.png', dpi=600)
+    plt.savefig('energy_dist.png', dpi=300)
     plt.show()
 
 
-def plotPsi(psi:np.ndarray):
-    """Plot psi(x) array
+def plotPsi(eigendata:dict):
+    """Plot multiple psi(x) arrays
     
     parameters
     ----------
-    array : ndarray
-        Array of psi(x) values
+    array : dict
+        eigenDatadict of eigenstates and corresponding eigenvalues
     """
+
     # Shape of Potential
-    l = 3
-    X = np.linspace(0, a, 1000)
-    V = np.where((X > 0) & (X < a), X * b, 1e-6) 
+    scale = 0.2
+    separation = 1
+    V = np.where((x >= 0) & (x <= a), x * b, 1e1) 
     
-    fig, ax = plt.subplots(1, figsize=(8, 5))
+    fig, ax = plt.subplots(1, 
+                           figsize=(6 * 2.5, 8 * 2.5)
+                           )
     # ax.plot(X, V, 'k', alpha=0.6)
-    ax.plot(x, psi, 'r', label=f'$\psi_1$, $E_1={0.50}$')
-    ax.set(title='Ramped Infinite Square Well', 
+    for i, data in enumerate(eigendata.values()):
+        wave = ax.plot(x, data["Function"] * scale + data['Eigenvalue'] * separation, 
+                       linewidth=3,
+                       label=f'$E_{i+1}$')
+        ax.axhline(data['Eigenvalue'] * separation, xmax=0.94,
+                   linestyle='--', alpha=0.8, color=wave[0].get_color())
+        
+        
+    
+    # Plotting shape of potential well
+    ax.plot(x, V, color='k', linewidth=2, label='$V(x)$')
+    ax.axvline(0, ymin=0, ymax=1e1, color='k', linewidth=2)
+    ax.axvline(3, ymin=0.75, ymax=1e1, color='k', linewidth=2)
+    ax.axvline(3, ymax=0.75, linestyle='--', color='k', alpha=0.7, linewidth=1.5)
+
+    ax.set(title='Ramped Infinite Square Well Eigenstates', 
            xlabel='x [nm]', 
-           ylabel='Energy [eV]', 
-        #    ylim=(0, 1e-3)
+           ylabel='Energy [eV] ', 
+           ylim=(0, 2)
            )
+    ax.legend()
+    # plt.savefig('energyLevels.png', dpi=300)
+    plt.show()
+
+def plotPsiSquared(eigendata:np.ndarray):
+    """Plot multiple |psi(x)|^2 arrays
+    
+    parameters
+    ----------
+    array : dict
+        eigenDatadict of eigenstates and corresponding eigenvalues
+    """
+    fig, ax = plt.subplots(1,figsize=(8*2, 5*2))
+    for i, data in enumerate(eigendata.values()):
+        wave = ax.plot(x, data["Function"]**2, 
+                       alpha=0.8, 
+                       linewidth=3,
+                       label=f'$E_{i+1}, \; \\left<x\\right>_{i+1}$')
+        ax.axvline(data["<x>"], linestyle='--', alpha=0.7, color=wave[0].get_color())
+
+    ax.axhline(0, color='k', linestyle='--', alpha=0.8)
+    ax.set(title='$\\left| \\psi_{1, 2, 3}(x) \\right|^2$ and $\\left< x\\right>_{1, 2, 3}$', 
+           xlabel='x [nm]', 
+           ylabel='$\\left| \\psi_n(x) \\right|^2$', 
+        #    ylim=(0, 2)
+           )
+    ax.legend()
+    plt.savefig('psiSquared.png', dpi=300)
     plt.show()
 
 
-def main():
+def createEigenData(energies):
+    waveFunctions = [normalisePsi(generatePsiArray(energy)) for energy in energies]
 
+    positionExpectations = [positionExpectation(wave) for wave in waveFunctions]
+    momentumExpectations = [momentumExpectation(wave) for wave in waveFunctions]
+
+    eigenData = {}
+
+    for i, energy in enumerate(energies):
+        eigenData[f"waveFunction{i + 1}"] = {
+            "Eigenvalue": energy,
+            "Function": waveFunctions[i],
+            "<x>": positionExpectations[i],
+            "<p>": momentumExpectations[i],
+        }
+
+    return eigenData
+
+
+def main():
+    energies = [0.500567553963311, 0.8714876814569196, 1.1781727259013322]
+    eigenData = createEigenData(energies)
+    
+    print(np.trapz(eigenData["waveFunction3"]["Function"]**2, x))
     # secantDescent(generatePsiEndpoint, 0.49, 0.499)
     # for i, initials in enumerate([(0.49, 0.499), (0.873, 0.871), (1.17, 1.18)]):
     #     try:
@@ -279,15 +338,17 @@ def main():
     #         print(f'Energy Eigenvalue E{i+1} = {E}')
     #     except TypeError:
     #         print(f'Eigenvalue: {(initials[0] + initials[1])/2} Not Found.')
-
-    #plotPsi(
-    #     normalisePsi(
-    #         generatePsiArray(0.5005675888061523))
-    #         )
-
-    visualRootFinding(np.linspace(0.5, 0.501, 30))
+     
+    # plotPsi(eigenData)
+    # plotPsiSquared(eigenData)
+    # for wave, data in eigenData.items():
+    #     print(f'<x> = {data["<x>"]}')
+    #     print(f'<p> = {data["<p>"]}')
+    # visualRootFinding(np.linspace(0.5, 1.18, 30))
     # plotGeneratePsiEndpoint()
-    
+
+    # print(posExpectations)
+    # print(momExpectations)
 
 
 if __name__ == '__main__':
