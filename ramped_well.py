@@ -199,7 +199,8 @@ def normalisePsi(psi:np.ndarray) -> np.ndarray:
         Normalised array of psi(x) values
     """
     psiSquared = psi**2
-    integralPsiSquared = dx * (np.sum(psiSquared[1: -1] + (psiSquared[0] + psiSquared[-1]) / 2)) #numerical approx. of integral
+    endpoints = (psiSquared[0] + psiSquared[-1]) / 2
+    integralPsiSquared = dx * (np.sum(psiSquared[1: -1] + endpoints))
     A_squared = 1 / integralPsiSquared
 
     return np.sqrt(A_squared) * psi
@@ -209,13 +210,14 @@ def positionExpectation(psi:np.ndarray):
     """Calculates the position expectation of a normalised energy eigenstate
     """
     psiSquared = psi**2
-    return dx * (sum(psiSquared[1:-1] * x[1:-1]) + (psiSquared[0] * x[0] + psiSquared[-1] * x[-1]) / 2)
+    endpoints = (psiSquared[0] * x[0] + psiSquared[-1] * x[-1]) / 2
+    return dx * (sum(psiSquared[1:-1] * x[1:-1]) + endpoints)
 
 
 def momentumExpectation(psi:np.ndarray):
     """Calculates the modulus of the momentum expectation of a normalised energy eigenstate
     """
-    result = -2 * 1j * hc * sum(psi[1:-1] * (psi[:-2] - psi[2:]))
+    result = -0.5 * (1j * hc) * sum(psi[1:-1] * (psi[:-2] - psi[2:]))
     return np.abs(result)
     
 
@@ -330,7 +332,7 @@ def main():
     energies = [0.500567553963311, 0.8714876814569196, 1.1781727259013322]
     eigenData = createEigenData(energies)
     
-    print(np.trapz(eigenData["waveFunction3"]["Function"]**2, x))
+    # print(np.trapz(eigenData["waveFunction3"]["Function"]**2, x))
     # secantDescent(generatePsiEndpoint, 0.49, 0.499)
     # for i, initials in enumerate([(0.49, 0.499), (0.873, 0.871), (1.17, 1.18)]):
     #     try:
