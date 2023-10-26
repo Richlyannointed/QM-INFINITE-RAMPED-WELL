@@ -309,7 +309,11 @@ def plotPsiSquared(eigendata:np.ndarray):
     plt.show()
 
 
-def createEigenData(energies):
+def createEigenData(energies:list):
+    """
+    Create a dictionary of eigenvalues, eigenvectors,and position 
+    & momentum expectations, given a list of energy eigenvalues
+    """
     waveFunctions = [normalisePsi(generatePsiArray(energy)) for energy in energies]
 
     positionExpectations = [positionExpectation(wave) for wave in waveFunctions]
