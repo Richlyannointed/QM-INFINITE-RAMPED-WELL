@@ -329,28 +329,34 @@ def createEigenData(energies):
 
 
 def main():
+    # Initialising Dictionary of Eigenfunction & Eigenvalue Data
     energies = [0.500567553963311, 0.8714876814569196, 1.1781727259013322]
     eigenData = createEigenData(energies)
     
-    # print(np.trapz(eigenData["waveFunction3"]["Function"]**2, x))
-    # secantDescent(generatePsiEndpoint, 0.49, 0.499)
-    # for i, initials in enumerate([(0.49, 0.499), (0.873, 0.871), (1.17, 1.18)]):
-    #     try:
-    #         E = secantDescent(generatePsiEndpoint, *initials)
-    #         print(f'Energy Eigenvalue E{i+1} = {E}')
-    #     except TypeError:
-    #         print(f'Eigenvalue: {(initials[0] + initials[1])/2} Not Found.')
+    
+    # Root Finding By Convergence
+    for i, initials in enumerate([(0.49, 0.499), (0.873, 0.871), (1.17, 1.18)]):
+        try:
+            E = secantDescent(generatePsiEndpoint, *initials)
+            print(f'Energy Eigenvalue E{i+1} = {E}')
+        except TypeError:
+            print(f'Eigenvalue: {(initials[0] + initials[1])/2} Not Found.')
      
-    # plotPsi(eigenData)
-    # plotPsiSquared(eigenData)
-    # for wave, data in eigenData.items():
-    #     print(f'<x> = {data["<x>"]}')
-    #     print(f'<p> = {data["<p>"]}')
-    # visualRootFinding(np.linspace(0.5, 1.18, 30))
-    # plotGeneratePsiEndpoint()
+    # Root Finding / Energy Level Distribution
+    visualRootFinding(np.linspace(0.5, 1.18, 30))
+    plotGeneratePsiEndpoint()
 
-    # print(posExpectations)
-    # print(momExpectations)
+    # Printing Expectations
+    for wave, data in eigenData.items():
+        print(f'<x> = {data["<x>"]}')
+        print(f'<p> = {data["<p>"]}')
+
+    # Checking normalisation
+    print(np.trapz(eigenData["waveFunction3"]["Function"]**2, x))
+
+    # Plotting
+    plotPsi(eigenData)
+    plotPsiSquared(eigenData)
 
 
 if __name__ == '__main__':
